@@ -253,18 +253,27 @@ public class NetworkManager : MonoBehaviour
         }
 
         if (response.data != null && response.data.Length > 0) {
-            if (response.handlerId == 0) {
-                GameManager.instance.GameStart();
-            }
-            ProcessResponseData(response.data);
+            ProcessResponseData(response);
         }
     }
 
-    void ProcessResponseData(byte[] data) {
+    void ProcessResponseData(Response response) {
         try {
-            // var specificData = Packets.Deserialize<SpecificDataType>(data);
-            string jsonString = Encoding.UTF8.GetString(data);
-            Debug.Log($"Processed SpecificDataType: {jsonString}");
+            string jsonString = Encoding.UTF8.GetString(response.data);
+
+            switch (response.handlerId) {
+                case (uint) Packets.HandlerIds.Init: {
+                    InitialData data = new InitialData();
+                    data.userId = Packets.ExtractValue(jsonString, "userId");
+                    data.x = float.Parse(Packets.ExtractValue(jsonString, "x"));
+                    data.y = float.Parse(Packets.ExtractValue(jsonString, "y"));
+                    Debug.Log($"userId: {data.userId}, x: {data.x}, y: {data.y}");
+
+                    GameManager.instance.GameStart(data);
+                    break;
+                }
+            }
+
         } catch (Exception e) {
             Debug.LogError($"Error processing response data: {e.Message}");
         }

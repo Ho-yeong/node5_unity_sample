@@ -14,10 +14,14 @@ public class Spawner : MonoBehaviour
         if (!GameManager.instance.isLive) {
             return;
         }
-        
+
         HashSet<string> newUsers = new HashSet<string>();
 
         foreach(LocationUpdate.UserLocation user in data.users) {
+            if (user.id == GameManager.instance.player.deviceId) {
+                Debug.Log($"me x: {user.x} y: {user.y}");
+                continue;
+            }
             newUsers.Add(user.id);
 
             GameObject player = GameManager.instance.pool.Get(user);
