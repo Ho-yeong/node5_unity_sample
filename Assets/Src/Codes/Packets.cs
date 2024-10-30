@@ -4,8 +4,9 @@ using System.IO;
 using System.Buffers;
 using System.Collections.Generic;
 using System;
+using System.Text;
 
-public class Packets : MonoBehaviour
+public class Packets
 {
     public enum PacketType { Ping, Normal, Location = 3 }
     public enum HandlerIds {
@@ -27,6 +28,22 @@ public class Packets : MonoBehaviour
             Debug.LogError($"Deserialize: Failed to deserialize data. Exception: {ex}");
             throw;
         }
+    }
+
+    private static T DeserializeJson<T>(string jsonString)
+    {
+        return JsonUtility.FromJson<T>(jsonString);
+    }
+
+    public static T ParsePayload<T>(byte[] data)
+    {
+        // 서버로부터 수신한 바이트 배열 (예시 데이터)
+        // 1. 바이트 배열을 UTF-8 문자열로 변환
+        string jsonString = Encoding.UTF8.GetString(data);
+
+        // InitialResponse로 디시리얼라이즈
+        T response = DeserializeJson<T>(jsonString);
+        return response;
     }
 }
 
@@ -103,4 +120,11 @@ public class Response {
 
     [ProtoMember(4)]
     public byte[] data { get; set; }
+}
+
+public class InitialResponse
+{
+    public string userId;
+    public float x;
+    public float y;
 }

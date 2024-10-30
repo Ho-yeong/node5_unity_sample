@@ -231,6 +231,9 @@ public class NetworkManager : MonoBehaviour
 
             switch (packetType)
             {
+                case Packets.PacketType.Ping:
+                    HandlePingPacket(packetData);
+                    break;
                 case Packets.PacketType.Normal:
                     HandleNormalPacket(packetData);
                     break;
@@ -253,8 +256,14 @@ public class NetworkManager : MonoBehaviour
         }
 
         if (response.data != null && response.data.Length > 0) {
-            if (response.handlerId == 0) {
-                GameManager.instance.GameStart();
+
+            switch ((Packets.HandlerIds) response.handlerId) 
+            {
+                case Packets.HandlerIds.Init: 
+                {
+                    Handler.InitialHandler(Packets.ParsePayload<InitialResponse>(response.data));
+                    break;
+                }
             }
             ProcessResponseData(response.data);
         }
@@ -286,5 +295,23 @@ public class NetworkManager : MonoBehaviour
         } catch (Exception e) {
             Debug.LogError($"Error HandleLocationPacket: {e.Message}");
         }
+    }
+
+    async void HandlePingPacket(byte[] data) {
+        // 타임스탬프
+        // 바로 돌려줄 예정
+
+        // 헤더 생성
+        byte[] header = CreatePacketHeader(data.Length, Packets.PacketType.Ping);
+
+        // 패킷 생성
+        byte[] packet = new byte[header.Length + data.Length];
+        Array.Copy(header, 0, packet, 0, header.Length);
+        Array.Copy(data, 0, packet, header.Length, data.Length);
+
+        await Task.Delay(GameManager.instance.latency);
+        
+        // 패킷 전송
+        stream.Write(packet, 0, packet.Length);
     }
 }
